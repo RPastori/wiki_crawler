@@ -39,11 +39,14 @@ def crawl(seedList, termList, folderPath):
     queue = []
     visited = []
     crawledCount = 0
+    limit = 500
     baseUrl = 'http://en.wikipedia.org/wiki/'
     for url in seedList:
         queue.append(url)
 
-    while queue and crawledCount < 500: # While the queue is not empty
+    print("Starting the webcrawl process:")
+    print("... crawling...")
+    while queue and crawledCount < limit: # While the queue is not empty
         currURL = queue.pop(0)
         if currURL not in visited:
             resp = requests.get(currURL)
@@ -57,9 +60,22 @@ def crawl(seedList, termList, folderPath):
 
             if termCount >= 2:
                 # save to directory
-                with open(str(folderPath) + '/file' + str(crawledCount) + '.html', 'w') as o:
+                with open(str(folderPath) + '/page' + str(crawledCount) + '.html', 'w') as o:
                     o.write(resp.text)
                 crawledCount += 1
+
+            # Looks for new URLs linked in the page.
+            # For now, I'm limited to Wikipedia pages, which makes my job easier
+            pageLocation = 'href="/wiki/'
+            for line in resp.iter_lines():
+                idx = str(line).find(pageLocation)
+                if idx != -1:
+                    urlPiece = str(line)[idx + len(pageLocation):] # slice of line
+                    tempList = urlPiece.split('"') # separates the part I actually
+                    urlPiece = tempList[0] # from the trailing junk
+                    queue.append(baseUrl + urlPiece)
+
+    print("All done! Check the", str(folderPath), "directory for the top", limit, "results.")
 
 def main():
     seedList = ['http://en.wikipedia.org/wiki/Heavy_metal_music', 'http://en.wikipedia.org/wiki/Heavy_metal_genres']
