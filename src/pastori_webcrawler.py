@@ -50,13 +50,17 @@ def crawl(seedList, termList, folderPath):
         currURL = queue.pop(0)
         if currURL not in visited:
             resp = requests.get(currURL)
-            #print(resp.text)
             visited.append(currURL)
+
+            outF.write(currURL + '\n')
 
             termCount = 0
             for term in termList:
-                if term in resp.text:
+                if term.lower() in resp.text.lower():
                     termCount += 1
+                if termCount == 2: # I'll remove this if I ever need to increase
+                    break # the threshold or measure precision. For now this is
+                    # to save runtime
 
             if termCount >= 2:
                 # save to directory
