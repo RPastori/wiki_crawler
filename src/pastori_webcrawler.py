@@ -7,33 +7,44 @@ import sys
 import os
 import requests # Must be installed with pip3 in the command line
 from pathlib import Path
+from urllib.parse import urlparse
 
-def usage(message):
-    print(message, file = sys.stderr)
+usage = lambda msg: print(msg, file = sys.stderr)
+
+argc = len(sys.argv)
 
 # Cleanly handles arguments for the sake of modularity and a clean main.
-# Not currently working. I will use hardcoded values for now and come back to
-# this later.
-'''
+# Very basic functionality for now. I plan on implementing a smarter arg handler
+# That can accomodate several different ways the user may pass parameters.
 def fetchArgs():
-    if argc == 4:
-        seedList = sys.argv[1]
-        terms = sys.argv[2]
-        folderPath = Path(sys.argv[3])
+    if argc == 3:
+        seedList = sys.argv[1].strip('[]"\'').split(',')
+        termList = sys.argv[2].strip('[]"\'').split(',')
 
-        if folderPath.is_dir():
-            pass # Good! We can write files here without a problem
-        else:
-            try:
-                os.makedirs(str(folderPath)) # Create directory
-            except:
-                print("Could not make directory " + str(folderPath), file = sys.stderr)
+        for i in range(len(seedList)):
+            seedList[i] = seedList[i].strip(' ')
+            if not bool(urlparse.urlparse(seedList[i]).scheme):
+                usage("URL list argument contains an invalid URL.")
+                return None, None
 
+        for i in range(len(termList)):
+            termList[i] = termList[i].strip(' ')
+
+        return seedList, termList
+    elif argc == 13: # In the case people enter 12 strings instead of 2 lists
+        seedList = []
+        termList = []
+        for i in range(1, 13):
+            arg = sys.argv[i].strip('[]"\', ')
+            if i in (1,2):
+                seedList.append(arg)
+            else:
+                termList.append(arg)
+        return seedList, termList
     else:
         usage(
-            "Please enter three arguments: [list of seed URLS] | [list of ten related terms] | 'Destination folder path'"
+            "Please enter two arguments: [list of seed URLS] | [list of ten related terms]"
             )
-'''
 
 def crawl(seedList, termList, folderPath):
     queue = []
@@ -83,6 +94,11 @@ def main():
     seedList = ['http://en.wikipedia.org/wiki/Heavy_metal_music', 'http://en.wikipedia.org/wiki/Heavy_metal_genres']
     termList = ['heavy', 'metal', 'music', 'band', 'guitar', 'drums', 'vocals', 'rock and roll', 'black sabbath', 'headbang']
     folderPath = Path('../pages')
+
+    if argc > 1:
+        seedList, termList = fetchArgs()
+        if seedList is None or termList is None:
+            return
 
     crawl(seedList, termList, folderPath)
 
