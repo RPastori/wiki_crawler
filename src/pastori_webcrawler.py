@@ -52,8 +52,6 @@ def crawl(seedList, termList, folderPath):
             resp = requests.get(currURL)
             visited.append(currURL)
 
-            outF.write(currURL + '\n')
-
             termCount = 0
             for term in termList:
                 if term.lower() in resp.text.lower():
